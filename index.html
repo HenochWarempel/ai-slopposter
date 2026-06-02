@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Slop Generator 🚀</title>
+  <style>
+    /* ── LinkedIn design tokens ── */
+    :root {
+      --color-background: #f3f2ef;
+      --color-surface: #ffffff;
+      --color-border: #e0dfdc;
+      --color-action: #0a66c2;
+      --color-action-hover: #004182;
+      --color-action-active: #09223b;
+      --color-text-primary: rgba(0,0,0,.9);
+      --color-text-secondary: rgba(0,0,0,.6);
+      --color-text-disabled: rgba(0,0,0,.38);
+      --color-success: #057642;
+      --color-warning-bg: #fff7e6;
+      --color-warning-border: #f0a500;
+      --font: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --shadow-card: 0 0 0 1px var(--color-border), 0 2px 4px -1px rgba(0,0,0,.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--color-background);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── Topnav ── */
+    nav {
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo {
+      width: 34px;
+      height: 34px;
+      fill: var(--color-action);
+    }
+
+    .nav-search {
+      display: flex;
+      align-items: center;
+      background: #eef3f8;
+      border-radius: var(--radius-sm);
+      padding: 0 8px;
+      gap: 6px;
+      height: 34px;
+      min-width: 220px;
+    }
+
+    .nav-search svg { width: 16px; height: 16px; fill: var(--color-text-secondary); }
+
+    .nav-search input {
+      border: none;
+      background: transparent;
+      font-family: var(--font);
+      font-size: 0.875rem;
+      color: var(--color-text-primary);
+      outline: none;
+      width: 100%;
+    }
+
+    .nav-search input::placeholder { color: var(--color-text-secondary); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 0 12px;
+      height: 52px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      text-decoration: none;
+      color: var(--color-text-secondary);
+      font-size: 0.75rem;
+      transition: color 0.1s;
+      min-width: 64px;
+    }
+
+    .nav-item svg { width: 24px; height: 24px; fill: currentColor; }
+
+    .nav-item:hover { color: var(--color-text-primary); }
+
+    .nav-item.active {
+      color: var(--color-text-primary);
+      border-bottom-color: var(--color-text-primary);
+    }
+
+    .nav-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    /* ── Layout ── */
+    .page {
+      max-width: 552px;
+      margin: 0 auto;
+      padding: 20px 0 60px;
+    }
+
+    /* ── Disclaimer banner ── */
+    .disclaimer {
+      background: #fff7e6;
+      border: 1px solid #f0a500;
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      margin-bottom: 12px;
+      font-size: 0.8rem;
+      color: #6b4400;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .disclaimer svg { width: 16px; height: 16px; fill: #f0a500; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Profile card ── */
+    .profile-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .profile-banner {
+      height: 56px;
+      background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+    }
+
+    .profile-body {
+      padding: 0 16px 16px;
+      position: relative;
+    }
+
+    .profile-pic {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 3px solid var(--color-surface);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: absolute;
+      top: -28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .profile-info { padding-top: 32px; }
+
+    .profile-name {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.33;
+    }
+
+    .profile-title {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ── Composer card (main input) ── */
+    .composer-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      padding: 12px 16px 0;
+      margin-bottom: 8px;
+    }
+
+    .composer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .composer-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .composer-trigger {
+      flex: 1;
+      border: 1px solid rgba(0,0,0,.6);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.1s;
+    }
+
+    .composer-trigger:hover { background: rgba(0,0,0,.05); }
+
+    .composer-input-expanded {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      color: var(--color-text-primary);
+      resize: none;
+      min-height: 80px;
+      margin: 12px 0 0;
+      padding: 0;
+      background: transparent;
+      line-height: 1.5;
+    }
+
+    .composer-input-expanded::placeholder { color: var(--color-text-secondary); }
+
+    .composer-divider { height: 1px; background: var(--color-border); margin: 8px -16px 0; }
+
+    .composer-actions {
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+      gap: 0;
+    }
+
+    .composer-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-family: var(--font);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.1s;
+      white-space: nowrap;
+    }
+
+    .composer-action-btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .composer-action-btn:hover { background: rgba(0,0,0,.05); color: var(--color-text-primary); }
+
+    .composer-action-btn.generate {
+      margin-left: auto;
+      background: var(--color-action);
+      color: #fff;
+      border-radius: 999px;
+      padding: 8px 20px;
+    }
+
+    .composer-action-btn.generate:hover { background: var(--color-action-hover); }
+    .composer-action-btn.generate:active { background: var(--color-action-active); }
+    .composer-action-btn.generate:disabled { background: rgba(0,0,0,.12); color: rgba(0,0,0,.38); cursor: not-allowed; }
+
+    /* ── Example chips ── */
+    .examples-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 16px 12px;
+    }
+
+    .examples-label { font-size: 0.75rem; color: var(--color-text-secondary); align-self: center; flex-shrink: 0; }
+
+    .chip {
+      font-size: 0.78rem;
+      font-family: var(--font);
+      padding: 4px 12px;
+      border: 1px solid var(--color-action);
+      border-radius: 999px;
+      color: var(--color-action);
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .chip:hover { background: #eef3f8; }
+
+    /* ── Output post card ── */
+    .post-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      margin-bottom: 8px;
+      display: none;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 12px 16px 0;
+    }
+
+    .post-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .post-meta { flex: 1; min-width: 0; }
+
+    .post-author {
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.33;
+    }
+
+    .post-author-sub {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      line-height: 1.33;
+    }
+
+    .post-author-sub .badge {
+      display: inline-block;
+      border: 1px solid var(--color-text-secondary);
+      border-radius: 2px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0 3px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .post-more {
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border: none;
+      background: none;
+      border-radius: 50%;
+      line-height: 0;
+    }
+
+    .post-more:hover { background: rgba(0,0,0,.05); }
+
+    .post-body {
+      padding: 8px 16px 0;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .post-footer {
+      padding: 4px 16px 0;
+    }
+
+    .reaction-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0 6px;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+    }
+
+    .reactions-left { display: flex; align-items: center; gap: 2px; }
+
+    .reaction-emoji { font-size: 1rem; }
+
+    .post-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 4px 0;
+    }
+
+    .post-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 16px;
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background 0.1s;
+      min-width: 80px;
+    }
+
+    .post-action-btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .post-action-btn:hover { background: rgba(0,0,0,.05); color: var(--color-text-primary); }
+
+    .post-action-btn.copied svg { fill: var(--color-success); }
+    .post-action-btn.copied { color: var(--color-success); }
+
+    .post-action-btn.share-li svg { fill: var(--color-action); }
+    .post-action-btn.share-li { color: var(--color-action); }
+
+    /* ── Cringe meter ── */
+    .cringe-section {
+      padding: 8px 16px 12px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .cringe-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cringe-bar-track {
+      height: 4px;
+      background: var(--color-border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .cringe-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0a66c2 0%, #f59e0b 55%, #ef4444 100%);
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Image suggestion card ── */
+    .image-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: none;
+    }
+
+    .image-card-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .image-card-header svg { width: 16px; height: 16px; fill: #f0a500; }
+
+    .image-card p {
+      font-size: 0.88rem;
+      color: var(--color-text-primary);
+      line-height: 1.55;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .page { padding: 12px 8px 60px; }
+      nav { padding: 0 12px; }
+      .nav-search { min-width: 140px; }
+      .nav-item { min-width: 44px; padding: 0 6px; }
+      .post-action-btn { min-width: 60px; padding: 8px 8px; font-size: 0.72rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LinkedIn-style top nav ── -->
+<nav>
+  <div class="nav-left">
+    <!-- LinkedIn logo -->
+    <svg class="nav-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+    </svg>
+    <div class="nav-search">
+      <svg viewBox="0 0 24 24"><path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Zoeken" readonly />
+    </div>
+  </div>
+
+  <div class="nav-right">
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24"><path d="M23 9v2h-2V7c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v4h-2V5c0-.55-.45-1-1-1H8c-.55 0-1 .45-1 1v6H5V7c0-.55-.45-1-1-1H0V4h4c.55 0 1-.45 1-1V1c0-.55.45-1 1-1h6c.55 0 1 .45 1 1v2c0 .55.45 1 1 1h4c.55 0 1 .45 1 1v2c0 .55.45 1 1 1h4v2zm-9 13H1v-2h13v2zm9-4H1v-2h22v2zm0-4H1v-2h22v2z"/></svg>
+      <span>Home</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><path d="M9 15c-4.63 0-8 2.04-8 4.5V21h16v-1.5C17 17.04 13.63 15 9 15zm0-2a5 5 0 1 0 0-10A5 5 0 0 0 9 13zm7.5 2.08c2.28.5 3.5 1.82 3.5 3.42V21h3v-2.5c0-2.1-2.62-3.5-6.5-4.42z"/></svg>
+      <span>Netwerk</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+      <span>Events</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      <span>Berichten</span>
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      <span>Meldingen</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ── Main content ── -->
+<main class="page">
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    <span>Dit is een <strong>parodie</strong> op LinkedIn-posts. Gebruik met gepast cynisme. Of gewoon serieus — het algoritme weet het verschil toch niet.</span>
+  </div>
+
+  <!-- Composer card -->
+  <div class="composer-card">
+    <div class="composer-row">
+      <div class="composer-avatar">JD</div>
+      <button class="composer-trigger" onclick="openComposer()" id="composer-trigger">
+        Wat is er vandaag met je gebeurd, Jan Doorklikker?
+      </button>
+    </div>
+
+    <!-- Expanded composer -->
+    <div id="composer-expanded" style="display:none">
+      <textarea
+        class="composer-input-expanded"
+        id="event-input"
+        placeholder="Beschrijf een totaal onbeduidende gebeurtenis… hoe triviaaler, hoe beter."
+        rows="4"
+        autofocus
+      ></textarea>
+      <div class="examples-row">
+        <span class="examples-label">Ideeën:</span>
+        <button class="chip" onclick="setExample(this)">Mijn pen viel op de grond</button>
+        <button class="chip" onclick="setExample(this)">Ik miste de bus</button>
+        <button class="chip" onclick="setExample(this)">De printer deed het niet</button>
+        <button class="chip" onclick="setExample(this)">Ik heb een boterham gegeten</button>
+        <button class="chip" onclick="setExample(this)">Mijn plant is dood</button>
+        <button class="chip" onclick="setExample(this)">Ik heb een dutje gedaan</button>
+        <button class="chip" onclick="setExample(this)">Ik zette koffie maar het was koud</button>
+      </div>
+    </div>
+
+    <div class="composer-divider"></div>
+    <div class="composer-actions">
+      <button class="composer-action-btn" onclick="openComposer()">
+        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        Foto/video
+      </button>
+      <button class="composer-action-btn" onclick="openComposer()">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        Artikel
+      </button>
+      <button class="composer-action-btn generate" id="generate-btn" onclick="generatePost()">
+        ✍️ Schrijf mijn post
+      </button>
+    </div>
+  </div>
+
+  <!-- Output: post card -->
+  <div class="post-card" id="post-card">
+
+    <div class="post-header">
+      <div class="post-avatar">JD</div>
+      <div class="post-meta">
+        <div class="post-author">Jan Doorklikker <span style="font-weight:400;color:var(--color-text-secondary);font-size:0.8rem;">• <span style="border:1px solid currentColor;padding:0 3px;border-radius:2px;font-size:0.65rem;font-weight:700;">1e</span></span></div>
+        <div class="post-author-sub">CEO | Founder | Visionair | Ondernemer | Spreker | Auteur | Mensch 🚀</div>
+        <div class="post-author-sub">Zojuist • 🌐</div>
+      </div>
+      <button class="post-more" title="Meer opties">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--color-text-secondary)"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+      </button>
+    </div>
+
+    <div class="post-body" id="post-output"></div>
+
+    <div class="post-footer">
+      <div class="reaction-row">
+        <div class="reactions-left">
+          <span class="reaction-emoji">👍</span>
+          <span class="reaction-emoji">❤️</span>
+          <span class="reaction-emoji">🚀</span>
+          <span id="reaction-count" style="margin-left:4px;">847 reacties</span>
+        </div>
+        <div>
+          <span id="comment-count">64 opmerkingen</span> &nbsp;·&nbsp; <span id="share-count">23 reposts</span>
+        </div>
+      </div>
+
+      <div class="post-actions">
+        <button class="post-action-btn" id="like-btn" onclick="toggleLike()">
+          <svg viewBox="0 0 24 24" id="like-icon"><path d="M9.6 20L8 18.4l7.05-7.05-7.05-7.05L9.6 2.6 18.05 11z"/></svg>
+          <span>Reageer</span>
+        </button>
+        <button class="post-action-btn" onclick="toggleLike()">
+          <svg viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+          <span>Opmerking</span>
+        </button>
+        <button class="post-action-btn" id="copy-btn" onclick="copyPost()">
+          <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          <span>Kopiëren</span>
+        </button>
+        <button class="post-action-btn share-li" onclick="shareOnLinkedIn()">
+          <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+          <span>Delen</span>
+        </button>
+      </div>
+
+      <!-- Cringe meter -->
+      <div class="cringe-section">
+        <div class="cringe-label">
+          <span>Cringe-gehalte</span>
+          <span id="cringe-score-label">—</span>
+        </div>
+        <div class="cringe-bar-track">
+          <div class="cringe-bar-fill" id="cringe-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image suggestion -->
+  <div class="image-card" id="image-card">
+    <div class="image-card-header">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      Aanbevolen afbeelding bij je post
+    </div>
+    <p id="image-suggestion-text"></p>
+  </div>
+
+</main>
+
+<script>
+  // ── Data pools ──────────────────────────────────────────────────────────────
+
+  const OPENERS = [
+    "Gisteren gebeurde er iets wat mijn kijk op ondernemen voorgoed heeft veranderd.\n\nIk {event}.",
+    "Eerlijk zijn is moeilijk.\nDus ik doe het toch.\n\nIk {event}.\n\nEn het heeft me meer geleerd dan vier jaar studie ooit had kunnen doen.",
+    "Ze zeggen dat grote lessen van grote momenten komen.\n\nZe vergissen zich.\n\nIk {event}.",
+    "Dit is een post die ik eigenlijk niet wilde schrijven.\n\nMaar ik voel dat ik dit moet delen.\n\nIk {event}.",
+    "Soms is het de kleine dingen die je wakker schudden.\n\nIk {event}.\n\nEn ik zal nooit meer dezelfde zijn.",
+    "Drie jaar geleden had ik nooit gedacht dat ik dit zou schrijven.\n\nMaar hier zijn we.\n\nIk {event}.",
+    "Niemand praat hierover.\n\nDus doe ik het wel.\n\nIk {event}.\n\nEn de les die ik leerde? Die verander ik mijn leven.",
+  ];
+
+  const REFLECTIONS = [
+    "Wat dacht ik op dat moment?\n\nNiets.\n\nAbsoluut niets.\n\nEn dat is precies het punt.",
+    "Op het eerste gezicht: onbeduidend.\nOp het tweede gezicht: een wake-up call.\nOp het derde gezicht: een complete mindshift.",
+    "Mijn eerste reactie was verwarring.\nMijn tweede reactie was acceptatie.\nMijn derde reactie was groei. 🚀",
+    "En eerlijk? Ik schrok ervan.\nNiet omdat het pijnlijk was.\nMaar omdat het zo herkenbaar was.",
+    "Zeg eens eerlijk: ken jij dit gevoel?\nDat kleine moment waarop alles ineens helder wordt?\nIk wel. Nu.",
+    "Niet omdat het spectaculair was.\nMaar omdat het zo gewoon was.\nEn dat is het meest spectaculaire van alles.",
+    "Ik stond er even bij stil.\nIk haalde diep adem.\nIk begreep het.",
+  ];
+
+  const BRIDGES = [
+    "En toen dacht ik aan mijn {businessThing}.\n\nWant is dat niet precies wat ondernemen is?\n\n{tricolon}",
+    "Dit bracht me terug naar de essentie van wat ik doe als ondernemer:\n\n{tricolon}",
+    "Als founder herken ik dit patroon:\n\n{tricolon}\n\nHet zijn niet de grote beslissingen die je vormen. Het zijn de kleine.",
+    "Business lesson die niemand je leert:\n\n{tricolon}\n\nKlinkt simpel. Is het ook. Maar waarom doen we het dan zo zelden?",
+    "Elk groot bedrijf begon met precies zo'n moment.\n\nEen moment van {adjective1}, {adjective2} en {adjective3}.\n\nDát is de formule.",
+    "Niet omdat ik bijzonder slim ben.\nMaar omdat ik bereid ben te leren van {adjective1}, {adjective2} en {adjective3}.\n\nDat is het geheim. 🚀",
+  ];
+
+  const TRICOLONS = [
+    "Luisteren. Leren. Leiden. 🚀",
+    "Vallen. Opstaan. Doorpakken.",
+    "Reflecteren. Heroriënteren. Groeien. 🚀",
+    "Kwetsbaar zijn. Sterk blijven. Verder gaan.",
+    "Fouten maken. Ze erkennen. Ze koesteren. 🚀",
+    "Richting kiezen. Koers houden. Waarde leveren.",
+    "Uitdagen. Aanpassen. Excelleren. 🚀",
+    "Stilstaan. Ademhalen. Doorgroeien.",
+    "Zaaien. Wachten. Oogsten.",
+  ];
+
+  const BULLET_BLOCKS = [
+    "Wat ik hieruit meeneem:\n\n✅ Stop met wachten op het perfecte moment\n✅ Omarm de chaos — het is je grootste leraar\n✅ Jouw zwakheid is jouw superkracht 🚀\n✅ Netwerk is je netto waarde",
+    "3 inzichten die elke ondernemer zou moeten kennen:\n\n→ Je hoeft niet alles te weten om te beginnen\n→ De markt beloont actie, niet perfectie\n→ Authenticiteit is de nieuwe marketing 🚀",
+    "Wat succesvolle leiders anders doen:\n\n• Ze zien problemen als kansen\n• Ze investeren in zichzelf first\n• Ze zijn comfortabel met oncomfort 🚀\n• Ze geven meer dan ze nemen",
+    "Harde waarheden die zachte leiders negeren:\n\n⚡ Resultaten vragen geen uitleg\n⚡ Comfortzone = stilstand\n⚡ Wie niet groeit, krimpt 🚀\n⚡ Jouw mindset is jouw marktaandeel",
+    "Wat mij dit heeft geleerd over business:\n\n🔑 Consistentie verslaat talent. Altijd.\n🔑 Jouw verhaal is jouw sterkste USP\n🔑 Purpose driven werken is geen trend — het is de toekomst 🚀\n🔑 De beste ROI zit in jezelf",
+  ];
+
+  const CLOSINGS = [
+    "Kortom: je hoeft geen rocket scientist te zijn om te begrijpen dat elke dag een nieuwe kans is. 🚀\n\nDeel dit als jij ook gelooft in de kracht van kleine momenten.\n\n#groei #ondernemen #mindset #leadership #authentiek #succes",
+    "En eerlijk? Ik ben blij dat het is gebeurd.\n\nNiet omdat het makkelijk was.\nMaar omdat het me heeft gemaakt tot wie ik nu ben.\n\nWat is jóúw kleine moment geweest? Laat het weten in de comments. 👇\n\n#persoonlijkeontwikkeling #ondernemen #groei 🚀 #leiderschap",
+    "Kortom: de wereld heeft geen gebrek aan informatie. Wel aan moed.\n\nWees moedig. Start vandaag. 🚀\n\nP.S. Als dit resoneert — repost het. Je weet nooit wie het nodig heeft.\n\n#entrepreneurship #mindset #groei #succes #authentieleven",
+    "Zeg eens eerlijk: wanneer heb jij voor het laast stilgestaan bij de kleine dingen?\n\nIk daag je uit. Vandaag. Eén moment. Bewust.\n\n🚀 Samen bouwen we aan een betere versie van onszelf.\n\n#bewustzijn #ondernemen #groei #community #samen",
+    "Niet omdat ik bijzonder ben.\nMaar omdat ik bereid ben om te leren.\n\nDát is het enige wat telt. 🚀\n\nVolg mij voor meer eerlijke reflecties over ondernemen, leven en groei.\n\n#authenticiteit #ondernemer #groeimindset #succes #inspiratie",
+    "Kortom: grootsheid begint in het kleine.\n\nIn een gezonken pen. Een gemiste bus. Een slechte kop koffie.\n\nDaar waar niemand kijkt, bouw jij aan jouw fundament. 🚀\n\n#groei #mindset #ondernemen #purpose #succes",
+  ];
+
+  const BUSINESS_THINGS = [
+    "startup", "personal brand", "groeistrategie", "visie als ondernemer",
+    "missie", "team", "product", "pivot", "roadmap", "go-to-market strategie",
+  ];
+
+  const ADJECTIVES = [
+    "kwetsbaarheid", "moed", "focus", "veerkracht", "authenticiteit",
+    "ambitie", "doorzettingsvermogen", "empathie", "lef", "visie", "urgentie",
+  ];
+
+  const IMAGE_SUGGESTIONS = [
+    "📸 Portretfoto van jou voor de Eiffeltoren (of een ander landmark waar je toevallig één keer langs bent gereden). Houding: armen gekruist, blik in de verte, alsof je de toekomst ziet. Heeft nul komma nul verband met je post. Juist daarom perfect.",
+    "📸 Selfie in de auto, zonnebril op, gouden uur. Expressie: nét iets te nadenkend voor iemand die stilstaat op een parkeerplaats. Optioneel: halve koffiebeker zichtbaar. Universeel inzetbaar bij elke LinkedIn-post ooit geschreven.",
+    "📸 Jij op een trappenhuis van een kantoorgebouw, belicht van boven alsof God je persoonlijk uitkiest. Kijk richting horizon (= de muur achter de fotograaf). Blazer over een t-shirt — de 'ik werk hard maar ben ook een mens'-dresscode. Staat overal bij.",
+    "📸 Zwart-wit close-up van je gezicht met licht geknepen ogen, alsof je nadenkt over de zin van het leven. Of over je vergeten autosleutels. Wordt gebruikt bij posts over koffie, verlies, succes, belasting en filosofie. Altijd raak.",
+    "📸 Jij achter een laptop in een hip café, laptop DUIDELIJK dicht. Je kijkt ernaar alsof hij je iets heeft aangedaan. Op tafel: een onaangeroerd notitieboekje en een koffie die al koud is. Filter: licht gedesatureerd. Vibes: 'ik werk hard maar leef ook'.",
+    "📸 Groepsfoto van een 'team offsite' waarvan niemand precies weet waarvoor. Iedereen lacht 30% te breed. Op de achtergrond: een flip-over met onleesbaar handschrift. Geen verband met je post. Ideaal. Voeg caption toe: 'Zo blij met dit team. 🚀'",
+    "📸 Portret tegen een witte muur, armen gekruist, hoofd licht scheef — de universele LinkedIn-houding die 'benaderbaar maar serieus' uitdrukt. Kledingkeuze: monochroom. Achtergrond: zo saai mogelijk. Ziet eruit als een gratis stockfoto van jezelf.",
+    "📸 Jij stappend over een zebrapad, gefotografeerd door iemand die 10 meter achter je loopt. Kijk niet om. Voeten net niet gelijk. Jas wappert licht. Onderschrift: 'Op weg. 🚀' — werkt voor elke post zonder uitzondering.",
+  ];
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function pickDifferent(arr, ...exclude) {
+    let v; do { v = pick(arr); } while (exclude.includes(v)); return v;
+  }
+
+  function setExample(btn) {
+    openComposer();
+    document.getElementById('event-input').value = btn.textContent;
+  }
+
+  function openComposer() {
+    document.getElementById('composer-trigger').style.display = 'none';
+    document.getElementById('composer-expanded').style.display = 'block';
+    document.getElementById('event-input').focus();
+  }
+
+  function buildPost(event) {
+    const adj1 = pick(ADJECTIVES);
+    const adj2 = pickDifferent(ADJECTIVES, adj1);
+    const adj3 = pickDifferent(ADJECTIVES, adj1, adj2);
+    const tricolon = pick(TRICOLONS);
+    const businessThing = pick(BUSINESS_THINGS);
+
+    const opener  = pick(OPENERS).replace('{event}', event.toLowerCase().replace(/\.$/, ''));
+    const reflect = pick(REFLECTIONS);
+    const bridge  = pick(BRIDGES)
+      .replace('{tricolon}', tricolon)
+      .replace('{businessThing}', businessThing)
+      .replace('{adjective1}', adj1)
+      .replace('{adjective2}', adj2)
+      .replace('{adjective3}', adj3);
+    const bullets = pick(BULLET_BLOCKS);
+    const closing = pick(CLOSINGS);
+
+    return [opener, reflect, bridge, bullets, closing].join('\n\n');
+  }
+
+  function buildImageSuggestion(event) {
+    return pick(IMAGE_SUGGESTIONS).replace('{event}', event);
+  }
+
+  function calcCringe(post) {
+    const triggers = ['🚀','✅','→','•','⚡','#groei','#mindset','#ondernemen',
+      'authenticiteit','kwetsbaar','wake-up','mindset','superkracht',
+      'groeimindset','Kortom:','eerlijk','Zeg eens','comfortzone',
+      'purpose','USP','ROI','pivot'];
+    let score = triggers.filter(t => post.toLowerCase().includes(t.toLowerCase())).length;
+    return Math.min(100, Math.round((score / triggers.length) * 100) + 65 + Math.floor(Math.random() * 14));
+  }
+
+  function randomInRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  // ── Main ────────────────────────────────────────────────────────────────────
+
+  let currentPost = '';
+
+  function generatePost() {
+    const eventInput = document.getElementById('event-input').value.trim();
+    if (!eventInput) {
+      const ta = document.getElementById('event-input');
+      ta.style.boxShadow = '0 0 0 2px #cc1016';
+      ta.focus();
+      setTimeout(() => ta.style.boxShadow = '', 1500);
+      return;
+    }
+
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Sloppen…';
+
+    setTimeout(() => {
+      currentPost = buildPost(eventInput);
+      const suggestion = buildImageSuggestion(eventInput);
+      const score = calcCringe(currentPost);
+
+      document.getElementById('post-output').textContent = currentPost;
+      document.getElementById('image-suggestion-text').textContent = suggestion;
+      document.getElementById('reaction-count').textContent = randomInRange(300, 2400) + ' reacties';
+      document.getElementById('comment-count').textContent = randomInRange(40, 280) + ' opmerkingen';
+      document.getElementById('share-count').textContent = randomInRange(12, 95) + ' reposts';
+
+      const postCard = document.getElementById('post-card');
+      const imageCard = document.getElementById('image-card');
+      postCard.style.display = 'block';
+      imageCard.style.display = 'block';
+
+      // Reset copy btn
+      const copyBtn = document.getElementById('copy-btn');
+      copyBtn.classList.remove('copied');
+      copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg><span>Kopiëren</span>';
+
+      setTimeout(() => {
+        document.getElementById('cringe-bar').style.width = score + '%';
+        document.getElementById('cringe-score-label').textContent = score + ' / 100';
+      }, 100);
+
+      postCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      btn.disabled = false;
+      btn.innerHTML = '✍️ Schrijf mijn post';
+    }, 800 + Math.random() * 700);
+  }
+
+  function copyPost() {
+    if (!currentPost) return;
+    navigator.clipboard.writeText(currentPost).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg><span>Gekopieerd!</span>';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg><span>Kopiëren</span>';
+      }, 2200);
+    });
+  }
+
+  function shareOnLinkedIn() {
+    if (!currentPost) return;
+    const url = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent('https://linkedin.com') + '&summary=' + encodeURIComponent(currentPost.substring(0, 700));
+    window.open(url, '_blank', 'noopener,noreferrer,width=600,height=640');
+  }
+
+  let liked = false;
+  function toggleLike() {
+    liked = !liked;
+    const btn = document.getElementById('like-btn');
+    const icon = document.getElementById('like-icon');
+    if (liked) {
+      icon.innerHTML = '<path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>';
+      btn.style.color = '#0a66c2';
+    } else {
+      icon.innerHTML = '<path d="M9.6 20L8 18.4l7.05-7.05-7.05-7.05L9.6 2.6 18.05 11z"/>';
+      btn.style.color = '';
+    }
+  }
+
+  // Ctrl+Enter to generate
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generatePost();
+  });
+</script>
+</body>
+</html>

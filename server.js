@@ -78,7 +78,11 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`AI Slopposter draait op http://localhost:${PORT}`);
-});
+export default app;
+
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`AI Slopposter draait op http://localhost:${PORT}`);
+  });
+}

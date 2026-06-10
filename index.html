@@ -850,7 +850,7 @@
 
   let currentPost = '';
 
-  function generatePost() {
+  async function generatePost() {
     const eventInput = document.getElementById('event-input').value.trim();
     if (!eventInput) {
       const ta = document.getElementById('event-input');
@@ -862,15 +862,26 @@
 
     const btn = document.getElementById('generate-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Sloppen…';
+    btn.innerHTML = '<span class="spinner"></span>AI aan het sloppen…';
 
-    setTimeout(() => {
-      currentPost = buildPost(eventInput);
-      const suggestion = buildImageSuggestion(eventInput);
-      const score = calcCringe(currentPost);
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: eventInput }),
+      });
 
-      document.getElementById('post-output').textContent = currentPost;
-      document.getElementById('image-suggestion-text').textContent = suggestion;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Serverfout');
+      }
+
+      const { post, imageSuggestion } = await res.json();
+      currentPost = post;
+      const score = calcCringe(post);
+
+      document.getElementById('post-output').textContent = post;
+      document.getElementById('image-suggestion-text').textContent = imageSuggestion;
       document.getElementById('reaction-count').textContent = randomInRange(300, 2400) + ' reacties';
       document.getElementById('comment-count').textContent = randomInRange(40, 280) + ' opmerkingen';
       document.getElementById('share-count').textContent = randomInRange(12, 95) + ' reposts';
@@ -880,7 +891,6 @@
       postCard.style.display = 'block';
       imageCard.style.display = 'block';
 
-      // Reset copy btn
       const copyBtn = document.getElementById('copy-btn');
       copyBtn.classList.remove('copied');
       copyBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg><span>Kopiëren</span>';
@@ -891,10 +901,12 @@
       }, 100);
 
       postCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
+    } catch (err) {
+      alert('Er ging iets mis: ' + err.message);
+    } finally {
       btn.disabled = false;
       btn.innerHTML = '✍️ Schrijf mijn post';
-    }, 800 + Math.random() * 700);
+    }
   }
 
   function copyPost() {
